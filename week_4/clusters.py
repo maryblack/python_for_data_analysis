@@ -59,11 +59,6 @@ def dbscen_ex(df):
             print(group)
 
 
-
-
-
-
-
 def main():
     df = pd.read_csv('weather-check.csv')
     df = df.drop(labels=df.columns[0], axis=1)
