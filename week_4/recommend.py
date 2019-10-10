@@ -42,34 +42,40 @@ def similar_users(u, R, n_neigbours):
 
     return res_sort[0:(n_neigbours)]
 
-def sr_uv(u, v, R):
-    sim = 0
-    u_rated = (u != 0)
-    row, _ = R.shape
-    sv = [cosine_similarity_pair_users(u_rated[i], v[0, i]) for i in range(row)]
-    for i in range(row):
-        sim += v[0, i]*sv[i]
 
-    return sim
-
-
+def sort_coo(m):
+    tuples = zip(m.row, m.col, m.data)
+    return sorted(tuples, key=lambda x: (x[0], x[2]))
 
 
 def rate_items_user(u, R, n_neigbours):
     nn = similar_users(u, R, n_neigbours+1)
     R_ = []
     user = R[u]
-    row, _ = R.shape
-    r = 0
-    s_abs = 0
-    for i in range(1,n_neigbours+1):
-        r = sr_uv(user, R[i], R)
-        R_.append(r)
+    row, cols = R.shape
+    s = []
+    for i in nn:
+        suv = cosine_similarity_pair_users(user, R[i])
+        s.append(suv)
+        R_.append(np.multiply(suv, R[i]))
+
+    ind = (user != 0).indices
+    notseen = []
+
+    res = np.multiply(1/np.sum(s), np.sum(R_))
+    nres = np.argsort(res.toarray())[0][::-1]
+    i = 0
+    j = 0
+    while i < 5:
+        if nres[j] in ind:
+            pass
+        else:
+            notseen.append(nres[j])
+            i+=1
+        j += 1
 
 
-    predictions = csr_matrix((1, R.shape[1]))
-
-    return predictions
+    return notseen
 
 def preprocessing():
     filepath = './data/user_ratedmovies.dat'
@@ -93,14 +99,15 @@ def preprocessing():
 
 def main():
     R = preprocessing()
-    # answer1 = round(cosine_similarity_pair_users(R[146], R[239]), 3)
-    # print(f'answer1: {answer1}')
-    # answer2 = np.array2string(similar_users(42, R, 10)).replace(' ', '').replace('[', '').replace(']', '')
-    # print(f'answer2: {answer2}')
+    answer1 = round(cosine_similarity_pair_users(R[146], R[239]), 3)
+    print(f'answer1: {answer1}')
+    answer2 = np.array2string(similar_users(42, R, 10)).replace(' ', '').replace('[', '').replace(']', '')
+    print(f'answer2: {answer2}')
     # print(len(answer2))
     # print(similar_users(42, R, 10))
     R_hat = rate_items_user(20, R, n_neigbours=30)
-    print(R_hat)
+    # print(R_hat)
+    print(f'answer3: {R_hat}')
 
 if __name__ == '__main__':
     main()
